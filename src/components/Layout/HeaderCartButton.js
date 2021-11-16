@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 
 import styles from "./HeaderCartButton.module.css";
 
@@ -17,14 +17,34 @@ const CartIcon = () => {
 };
 
 const HeaderCartButton = ({ onClick }) => {
-	const { totalAmount } = useContext(CartContext);
+	const [btnIsHighlighted, setbtnIsHighlighted] = useState(false);
+
+	const buttonClasses = `${styles.button} ${
+		btnIsHighlighted ? styles.bump : ""
+	}`;
+	const { items } = useContext(CartContext);
+
+	const numOfCartItems = items.reduce((curNum, item) => {
+		return curNum + item.amount;
+	}, 0);
+
+	useEffect(() => {
+		if (items.length === 0) return;
+		setbtnIsHighlighted(true);
+		const timer = setTimeout(() => {
+			setbtnIsHighlighted(false);
+		}, 300);
+		return () => {
+			clearTimeout(timer);
+		};
+	}, [items]);
 	return (
-		<button onClick={onClick} className={styles.button}>
+		<button onClick={onClick} className={buttonClasses}>
 			<span className={styles.icon}>
 				<CartIcon></CartIcon>
 			</span>
 			<span>Your cart</span>
-			<span className={styles.badge}>{totalAmount}</span>
+			<span className={styles.badge}>{numOfCartItems}</span>
 		</button>
 	);
 };
