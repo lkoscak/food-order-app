@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+
+import useHttp from "../../hooks/use-http";
 
 import styles from "./AvailableMeals.module.css";
 
@@ -7,34 +9,30 @@ import Card from "../UI/Card";
 
 const AvailabelMeals = () => {
 	const [meals, setMeals] = useState([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState(null);
-	useEffect(() => {
-		const fetchMeals = async () => {
-			const response = await fetch(
-				"https://food-order-app-6fcc1-default-rtdb.europe-west1.firebasedatabase.app/meals.json"
-			);
-			if (!response.ok) {
-				throw new Error("Something went wrong while fetching meals!");
-			}
-			const responseData = await response.json();
-			const loadedMeals = [];
-			for (const key in responseData) {
-				loadedMeals.push({
-					id: key,
-					name: responseData[key].name,
-					description: responseData[key].description,
-					price: responseData[key].price,
-				});
-			}
-			setMeals(loadedMeals);
-			setIsLoading(false);
-		};
-		fetchMeals().catch((error) => {
-			setIsLoading(false);
-			setError(error.message);
-		});
+
+	const handleMeals = useCallback((responseData) => {
+		const loadedMeals = [];
+		for (const key in responseData) {
+			loadedMeals.push({
+				id: key,
+				name: responseData[key].name,
+				description: responseData[key].description,
+				price: responseData[key].price,
+			});
+		}
+		setMeals(loadedMeals);
 	}, []);
+
+	const [fetchMeals, isLoading, error] = useHttp();
+
+	useEffect(() => {
+		fetchMeals(
+			{
+				url: "https://food-order-app-6fcc1-default-rtdb.europe-west1.firebasedatabase.app/meals.json",
+			},
+			handleMeals
+		);
+	}, [fetchMeals, handleMeals]);
 
 	if (isLoading) {
 		return (

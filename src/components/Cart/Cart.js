@@ -1,5 +1,6 @@
 import { useContext, useState } from "react";
 
+import useHttp from "../../hooks/use-http";
 import CartContext from "../../store/cart-context";
 
 import styles from "./Cart.module.css";
@@ -10,8 +11,7 @@ import Checkout from "./Checkout";
 
 const Cart = ({ onHideCart }) => {
 	const [isCheckout, setisCheckout] = useState(false);
-	const [isSubmiting, setIsSubmiting] = useState(false);
-	const [didSubmit, setDidSubmit] = useState(false);
+	const [submitOrder, isLoading] = useHttp();
 	const cartCtx = useContext(CartContext);
 	const totalAmount = `$${cartCtx.totalAmount.toFixed(2)}`;
 	const hasItems = cartCtx.items.length > 0;
@@ -26,19 +26,15 @@ const Cart = ({ onHideCart }) => {
 		setisCheckout(true);
 	};
 	const submitOrderHandler = async (userData) => {
-		setIsSubmiting(true);
-		await fetch(
-			"https://food-order-app-6fcc1-default-rtdb.europe-west1.firebasedatabase.app/orders.json",
-			{
-				method: "POST",
-				body: JSON.stringify({
-					user: userData,
-					orderedItems: cartCtx.items,
-				}),
-			}
-		);
-		setIsSubmiting(false);
-		setDidSubmit(true);
+		submitOrder({
+			url: "https://food-order-app-6fcc1-default-rtdb.europe-west1.firebasedatabase.app/orders.json",
+			method: "POST",
+			body: {
+				user: userData,
+				orderedItems: cartCtx.items,
+			},
+		});
+		onHideCart();
 		cartCtx.clear();
 	};
 	const cartItems = (
@@ -91,20 +87,10 @@ const Cart = ({ onHideCart }) => {
 
 	const isSubmittingModalContent = <p>Sending order data...</p>;
 
-	const didSubmitModalContent = (
-		<>
-			<p>Successfully sent the order!</p>
-			<button onClick={onHideCart} className={styles.button}>
-				Close
-			</button>
-		</>
-	);
-
 	return (
 		<Modal onClick={onHideCart}>
-			{!isSubmiting && !didSubmit && cartModalContent}
-			{isSubmiting && isSubmittingModalContent}
-			{didSubmit && didSubmitModalContent}
+			{!isLoading && cartModalContent}
+			{isLoading && isSubmittingModalContent}
 		</Modal>
 	);
 };
